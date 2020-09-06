@@ -11,13 +11,15 @@ import { } from 'googlemaps';
   styleUrls: ['./app.component.scss']
 })
 export class AppComponent implements OnInit {
-  @ViewChild('selectedPicture', { static: false }) selectedPicture: any;
 
   constructor() { }
+  @ViewChild('selectedPicture', { static: false }) selectedPicture: any;
+  @ViewChild('stepperNoAd', { static: false }) stepperNoAd: any;
+  @ViewChild('comercioAdheridoGroup', { static: false }) comercioAdheridoGroup: any;
   public map: any;
   public marker: any;
-  public locationSelected: boolean = false;
-  public archivoActual: boolean = false;
+  public locationSelected = false;
+  public archivoActual = false;
   public stepOneFormGroup: FormGroup;
   public stepOneFormGroupNA: FormGroup;
   public stepTwoFormGroupNA: FormGroup;
@@ -26,53 +28,54 @@ export class AppComponent implements OnInit {
   public stepThreeFormGroup: FormGroup;
   public comercioNoAdheridoForm: FormGroup;
   public comercioNoAdheridoForm2: FormGroup;
-  private _formBuilder: FormBuilder = new FormBuilder()
-  public headersComercioAdherido: string[] = ["codigo", "nombre", "precio", 'opciones'];
+  private _formBuilder: FormBuilder = new FormBuilder();
+  public headersComercioAdherido: string[] = ['codigo', 'nombre', 'precio', 'opciones'];
   public min = new Date();
   public productosComercioAdherido: any[] = [
     {
-      codigo: "AAAA",
-      nombre: "Pepsi 350ml",
+      codigo: 'AAAA',
+      nombre: 'Pepsi 350ml',
       precio: 50
     },
     {
-      codigo: "BBBB",
-      nombre: "Pancho",
+      codigo: 'BBBB',
+      nombre: 'Pancho',
       precio: 100
     },
     {
-      codigo: "CCCC",
-      nombre: "Hamburguesa",
+      codigo: 'CCCC',
+      nombre: 'Hamburguesa',
       precio: 150
     }
   ];
   public productosComercioAdheridoSource = new MatTableDataSource(this.productosComercioAdherido);
-  public headersCarrito: string[] = ["cantidad", "codigo", "nombre", "precio", "opciones"];
+  public headersCarrito: string[] = ['cantidad', 'codigo', 'nombre', 'precio', 'opciones'];
   public productosCarrito: any[] = [];
   public productosCarritoSource = new MatTableDataSource(this.productosCarrito);
-  public aCompra:boolean = false;
-  public aCompraNA:boolean = false;
-  public isLinear:boolean = true;
+  public aCompra = false;
+  public aCompraNA = false;
+  public isLinear = true;
   public anios: any[] = [];
   public meses: any[] = [];
-  public mapShow:boolean = false;
+  public mapShow = false;
+  title = 'grupoCincoDeliverEat';
   ngOnInit() {
-    initMap()
+    initMap();
 
     for (let i = 1; i < 13; i++) {
       this.meses.push(i);
-    };
+    }
     for (let i = 2019; i < 2040; i++) {
       this.anios.push(i);
-    };
+    }
     this.comercioNoAdheridoForm = this._formBuilder.group({
       detalleCompra: [null, Validators.required],
       foto: [null],
     });
     this.comercioNoAdheridoForm2 = this._formBuilder.group({
-      calle: [null, Validators.required],
-      numero: [null, Validators.required],
-      ciudad: [null, Validators.required],
+      calle: [null, calleValidator(/.*/, this.locationSelected)],
+      numero: [null, calleValidator(/.*/, this.locationSelected)],
+      ciudad: [null, calleValidator(/.*/, this.locationSelected)],
       referencia: [null],
     });
     this.stepOneFormGroupNA = this._formBuilder.group({
@@ -96,7 +99,6 @@ export class AppComponent implements OnInit {
     });
 
   }
-  title = 'grupoCincoDeliverEat';
 
   agregarAlCarrito(item) {
     let exist = false;
@@ -114,15 +116,16 @@ export class AppComponent implements OnInit {
   }
 
   sacarDelCarrito(index) {
-    if (this.productosCarrito[index].cantidad == 1)
+    if (this.productosCarrito[index].cantidad == 1) {
       this.productosCarrito.splice(index, 1);
-    else
-      this.productosCarrito[index].cantidad = this.productosCarrito[index].cantidad - 1
+    } else {
+      this.productosCarrito[index].cantidad = this.productosCarrito[index].cantidad - 1;
+    }
     this.refreshProductosCarrito();
   }
 
   refreshProductosCarrito() {
-    this.productosCarritoSource = new MatTableDataSource(this.productosCarrito)
+    this.productosCarritoSource = new MatTableDataSource(this.productosCarrito);
   }
 
   confirmarCompra() {
@@ -148,27 +151,42 @@ export class AppComponent implements OnInit {
         numeroTarjeta: ['', [Validators.required, visaValidator]]
       });
     } else {
-      alert("Debe tener productos en el carrito!");
+      alert('Debe tener productos en el carrito!');
+    }
+  }
+  fechaRadioChanged(radio) {
+    if (radio === 1) {
+      this.stepTwoFormGroupNA.controls['fechaEntregaRadio'].setValidators(Validators.required);
+      this.stepTwoFormGroupNA.controls['fechaEntregaRadio'].updateValueAndValidity();
+      this.stepTwoFormGroupNA.controls['fechaEntregaDtp'].setValidators(null);
+      this.stepTwoFormGroupNA.controls['fechaEntregaDtp'].updateValueAndValidity();
+    } else {
+      this.stepTwoFormGroupNA.controls['fechaEntregaRadio'].setValidators(null);
+      this.stepTwoFormGroupNA.controls['fechaEntregaRadio'].updateValueAndValidity();
+      this.stepTwoFormGroupNA.controls['fechaEntregaDtp'].setValidators(Validators.required);
+      this.stepTwoFormGroupNA.controls['fechaEntregaDtp'].updateValueAndValidity();
     }
   }
 
   finalizarCompra() {
-    alert("Su pedido se realizo exitósamente!");
-    location.reload()
+    alert('Su pedido se realizo exitósamente!');
+    location.reload();
   }
 
   cancelarCompra() {
     this.aCompra = false;
     this.aCompraNA = false;
     this.productosCarrito = [];
+    this.stepperNoAd.reset();
+    this.comercioAdheridoGroup.value = 'undefined';
     this.refreshProductosCarrito();
   }
 
   calcularTotalCarrito() {
     let total = 0;
     this.productosCarrito.map(prod => {
-      total += prod.precio * prod.cantidad
-    })
+      total += prod.precio * prod.cantidad;
+    });
     return total;
   }
 
@@ -225,12 +243,25 @@ export class AppComponent implements OnInit {
   confirmLocation() {
     this.locationSelected = true;
     this.toggleMap();
-    alert('La ubicación se guardo con exito!')
+    this.comercioNoAdheridoForm2.controls['calle'].setValidators([calleValidator(/.*/, this.locationSelected));
+    this.comercioNoAdheridoForm2.controls['calle'].updateValueAndValidity();
+    this.comercioNoAdheridoForm2.controls['numero'].setValidators(calleValidator(/.*/, this.locationSelected));
+    this.comercioNoAdheridoForm2.controls['numero'].updateValueAndValidity();
+    this.comercioNoAdheridoForm2.controls['ciudad'].setValidators(calleValidator(/.*/, this.locationSelected));
+    this.comercioNoAdheridoForm2.controls['ciudad'].updateValueAndValidity();
+
+    alert('La ubicación se guardo con exito!');
   }
 
-  deleteLocation(){
+  deleteLocation() {
     this.locationSelected = false;
-    alert('La ubicación se borro con exito!')
+    this.comercioNoAdheridoForm2.controls['calle'].setValidators(Validators.required);
+    this.comercioNoAdheridoForm2.controls['calle'].updateValueAndValidity();
+    this.comercioNoAdheridoForm2.controls['numero'].setValidators(Validators.required);
+    this.comercioNoAdheridoForm2.controls['numero'].updateValueAndValidity();
+    this.comercioNoAdheridoForm2.controls['ciudad'].setValidators(Validators.required);
+    this.comercioNoAdheridoForm2.controls['ciudad'].updateValueAndValidity();
+    alert('La ubicación se borro con exito!');
   }
   /* private initMap(): void {
     // Creamos un objeto mapa y especificamos el elemento DOM donde se va a mostrar.
@@ -243,56 +274,57 @@ export class AppComponent implements OnInit {
         position: { lat: 43.2686751, lng: -2.9340005 },
         draggable: true
     });
-    
+
     // Le asignamos el mapa a los marcadores.
     this.marker.setMap(this.map);
-  
+
     google.maps.event.addListener(this.map,'click', function(event) {
       placeMarker(event.latLng,this.map);
     });
-    
+
     function placeMarker(location, map) {
        var marker = new google.maps.Marker({
-           position: location, 
+           position: location,
            map: map
        });
     }
   } */
 
-
+  prro() {
+    console.log(this.stepTwoFormGroupNA)
+  }
   public async archivoSeleccionado(event) {
-    this.archivoActual = true
-    let file = <File>event.target.files[0];;
-    let extension: string = file.name.substring(file.name.lastIndexOf('.'));
+    this.archivoActual = true;
+    const file = event.target.files[0] as File;
+    const extension: string = file.name.substring(file.name.lastIndexOf('.'));
 
     if (extension == '.jpg') {
       if (file.size < 5242880) {
         try {
-          var reader = new FileReader();
+          const reader = new FileReader();
           reader.readAsDataURL(file);
           reader.onload = () => {
-            let base64 = reader.result;
-            let picture = { picture: base64, extension: extension };
-            alert("La imagen se cargo con exito!");
+            const base64 = reader.result;
+            const picture = { picture: base64, extension };
+            alert('La imagen se cargo con exito!');
           };
           reader.onerror = function (error) {
-            alert("Hubo un error al cargar la imagen");
+            alert('Hubo un error al cargar la imagen');
           };
-        }
-        catch {
+        } catch {
           this.clearSelectedPicture();
           this.archivoActual = false;
-          alert("Hubo un error al cargar la imagen");
+          alert('Hubo un error al cargar la imagen');
         }
       } else {
         this.clearSelectedPicture();
         this.archivoActual = false;
-        alert("La imagen no puede superar los 5Mb");
+        alert('La imagen no puede superar los 5Mb');
       }
     } else {
       this.clearSelectedPicture();
       this.archivoActual = false;
-      alert("El formato de la imagen no es .JPG");
+      alert('El formato de la imagen no es .JPG');
     }
   }
 }
@@ -321,7 +353,7 @@ function codigoValidator(control: AbstractControl): { [key: string]: boolean } |
 }
 
 function tryParseInt(str, defaultValue) {
-  var retValue = defaultValue;
+  let retValue = defaultValue;
   if (str !== null) {
     if (str.length > 0) {
       if (!isNaN(str)) {
@@ -331,11 +363,11 @@ function tryParseInt(str, defaultValue) {
   }
   return retValue;
 }
-var map;
-var markers = [];
+let map;
+let markers = [];
 
 function initMap() {
-  var cordoba = { lat: -31.5, lng: -64.0 };
+  const cordoba = { lat: -31.5, lng: -64.0 };
   map = new google.maps.Map(document.getElementById('mapa'), {
     zoom: 6,
     center: cordoba,
@@ -344,7 +376,7 @@ function initMap() {
 
   // This event listener will call addMarker() when the map is clicked.
   map.addListener('click', function (event) {
-    deleteMarkers()
+    deleteMarkers();
     addMarker(event.latLng);
   });
 
@@ -354,16 +386,16 @@ function initMap() {
 
 // Adds a marker to the map and push to the array.
 function addMarker(location) {
-  var marker = new google.maps.Marker({
+  const marker = new google.maps.Marker({
     position: location,
-    map: map
+    map
   });
   markers.push(marker);
 }
 
 // Sets the map on all markers in the array.
 function setMapOnAll(map) {
-  for (var i = 0; i < markers.length; i++) {
+  for (let i = 0; i < markers.length; i++) {
     markers[i].setMap(map);
   }
 }
@@ -382,4 +414,12 @@ function showMarkers() {
 function deleteMarkers() {
   clearMarkers();
   markers = [];
+}
+
+export function calleValidator(reg, calle) {
+  return (control: AbstractControl): { [key: string]: any } | null => {
+    const forbidden = reg.test(control.value);
+    if (calle) { return null; }
+    return forbidden ? { forbiddenName: { value: control.value } } : null;
+  };
 }
