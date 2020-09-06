@@ -243,7 +243,7 @@ export class AppComponent implements OnInit {
   confirmLocation() {
     this.locationSelected = true;
     this.toggleMap();
-    this.comercioNoAdheridoForm2.controls['calle'].setValidators([calleValidator(/.*/, this.locationSelected));
+    this.comercioNoAdheridoForm2.controls['calle'].setValidators(calleValidator(/.*/, this.locationSelected));
     this.comercioNoAdheridoForm2.controls['calle'].updateValueAndValidity();
     this.comercioNoAdheridoForm2.controls['numero'].setValidators(calleValidator(/.*/, this.locationSelected));
     this.comercioNoAdheridoForm2.controls['numero'].updateValueAndValidity();
